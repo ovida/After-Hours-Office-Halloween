@@ -11,6 +11,15 @@
   #story{white-space:pre-wrap;min-height:180px;font-size:1.05rem;margin:18px 0}
   .choice-btn{display:block;width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#111;color:#eee;margin:8px 0;cursor:pointer;text-align:left}
   #mute-btn{position:fixed;right:14px;top:14px;padding:6px 10px;border-radius:8px;background:#111;border:1px solid #444;color:#fff;cursor:pointer}
+  @keyframes screenFlicker {
+  0%, 100% { background-color: #000; }
+  20%, 80% { background-color: #111; }
+  40%, 60% { background-color: #222; }
+}
+
+.flicker {
+  animation: screenFlicker 1s ease-in-out;
+}
 </style>
 </head>
 <body>
@@ -163,20 +172,44 @@ function typeWriterEffect(text, callback){
 }
 
 /* ---------- render scene ---------- */
-function playScene(key){
+function playScene(key) {
   const scene = story[key];
-  if(!scene) return;
+  if (!scene) return;
   choicesDiv.innerHTML = '';
 
-  // random sound cues
-  if(soundEnabled){
-    const r = Math.random();
-    if(r < 0.35) { flickerSound.currentTime=0; flickerSound.play().catch(()=>{}); }
-    else if(r < 0.7) { whisperSound.currentTime=0; whisperSound.play().catch(()=>{}); }
-  }
+  // check for keywords
+  const textLower = scene.text.toLowerCase();
+  const hasWhisper = textLower.includes("whisper");
+  const hasFlicker = textLower.includes("flicker");
 
   typeWriterEffect(scene.text, () => {
-    if(!scene.choices || scene.choices.length===0){
+    // 👻 whisper sound effect
+    if (soundEnabled && hasWhisper) {
+      whisperSound.currentTime = 0;
+      whisperSound.play().catch(() => {});
+    }
+
+    // 💡 flicker effect (sound + visual)
+    if (soundEnabled && hasFlicker) {
+      // play sound
+      flickerSound.currentTime = 0;
+      flickerSound.play().catch(() => {});
+
+      // screen flicker animation
+      document.body.classList.add('flicker');
+      setTimeout(() => {
+        document.body.classList.remove('flicker');
+      }, 1200); // lasts ~1.2s
+    }
+
+    // random small flickers if nothing special in text
+    if (soundEnabled && !hasWhisper && !hasFlicker && Math.random() < 0.2) {
+      flickerSound.currentTime = 0;
+      flickerSound.play().catch(() => {});
+    }
+
+    // show choices
+    if (!scene.choices || scene.choices.length === 0) {
       const b = document.createElement('button');
       b.textContent = '🔁 Play Again';
       b.className = 'choice-btn';
@@ -185,7 +218,7 @@ function playScene(key){
     } else {
       scene.choices.forEach(c => {
         const btn = document.createElement('button');
-        btn.className='choice-btn';
+        btn.className = 'choice-btn';
         btn.textContent = c.text;
         btn.onclick = () => playScene(c.next);
         choicesDiv.appendChild(btn);
