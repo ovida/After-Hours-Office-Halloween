@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Do You Want to Play? 👻</title>
+<style>
+  body {
+    background-color: #000;
+    color: #e3e3e3;
+    font-family: "Courier New", monospace;
+    padding: 40px;
+    line-height: 1.6;
+    max-width: 700px;
+    margin: auto;
+  }
+  #story {
+    font-size: 1.1em;
+    white-space: pre-wrap;
+    min-height: 180px;
+  }
+  .choice-btn {
+    background: #222;
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 10px 15px;
+    color: #eee;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    width: 100%;
+    text-align: left;
+  }
+  .choice-btn:hover {
+    background: #444;
+    transform: scale(1.02);
+  }
+  h1 {
+    text-align: center;
+    color: #ff3333;
+  }
+  .flicker {
+    animation: flicker 2s infinite;
+  }
+  @keyframes flicker {
+    0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+    20%, 24%, 55% { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+<h1 class="flicker">💻 Do You Want to Play? 💀</h1>
+<div id="story"></div>
+<div id="choices"></div>
+<audio id="typingSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_ebc4dc0673.mp3?filename=keyboard-typing-81261.mp3"></audio>
+<audio id="flickerSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_59d4436d1f.mp3?filename=light-flicker-81138.mp3"></audio>
+<audio id="whisperSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_1aee62dc15.mp3?filename=spooky-whisper-81150.mp3"></audio>
+
+<script>
+const story = {
+  "start": {
+    "text": "👀 *6:59 PM.* Everyone’s gone. The hum of the lights feels louder than usual. You’re about to shut down your PC when an email pops up:\n*From:* unknown@officecorp.com\n*Subject:* Do you want to play?",
+    "choices": [
+      {"text": "Open the email 📧", "next": "open_email"},
+      {"text": "Ignore it 🙈", "next": "ignore_email"}
+    ]
+  },
+  "open_email": {
+    "text": "📩 The email simply says: *‘We know you stayed late. Let’s play a game. Find the red folder.’*\nA faint *footstep* echoes down the hall — but you’re alone... right?",
+    "choices": [
+      {"text": "Search your desk 🗄️", "next": "search_desk"},
+      {"text": "Check the hallway 🚶", "next": "search_hallway"}
+    ]
+  },
+  "ignore_email": {
+    "text": "⚡ The lights flicker. Another message appears instantly: *‘You can’t hide from me.’*\nSomething moves on your monitor’s reflection — but nothing’s behind you.",
+    "choices": [
+      {"text": "Go check the email 📧", "next": "open_email"},
+      {"text": "Hide under your desk 🪑", "next": "hide_desk"}
+    ]
+  },
+  "search_desk": {
+    "text": "You open your drawer. A *red folder* slides forward on its own. Inside, a note reads:\n*‘When the clock strikes 10, you must choose your door.’* ⏰\nThe second hand ticks louder with every breath.",
+    "choices": [
+      {"text": "Head to the break room 🍵", "next": "break_room"},
+      {"text": "Try the exit door 🚪", "next": "exit_door"}
+    ]
+  },
+  "search_hallway": {
+    "text": "The hallway lights buzz overhead. A silhouette stands at the far end, motionless. When you blink — it’s gone.\nA door creaks open near the conference room.",
+    "choices": [
+      {"text": "Follow the sound 👤", "next": "conference_room"},
+      {"text": "Retreat to your desk 🖥️", "next": "search_desk"}
+    ]
+  },
+  "hide_desk": {
+    "text": "You crawl under your desk. Silence… then the printer starts printing a page by itself: *‘Stand up.’* 🖨️\nThe paper keeps sliding out — blank, blank, blank — until one shows your name.",
+    "choices": [
+      {"text": "Stand up 🧍", "next": "search_desk"},
+      {"text": "Stay hidden 🫣", "next": "stay_hidden"}
+    ]
+  },
+  "break_room": {
+    "text": "You enter the break room. The clock reads *9:59.* Three coffee cups sit in a row — one trembling slightly.\nA whisper brushes your ear: *‘Choose carefully.’*",
+    "choices": [
+      {"text": "Pick left cup 🟢", "next": "key_left"},
+      {"text": "Pick middle cup 🟡", "next": "key_middle"},
+      {"text": "Pick right cup 🔴", "next": "key_right"}
+    ]
+  },
+  "exit_door": {
+    "text": "You reach the exit. The glass reflects the office behind you — except the reflection isn’t moving.\nIt slowly smiles. 😳",
+    "choices": [
+      {"text": "Look for a key 🗝️", "next": "break_room"},
+      {"text": "Try another exit 🏃", "next": "other_exit"}
+    ]
+  },
+  "conference_room": {
+    "text": "The door creaks open. It’s dark. A chair slowly turns toward you — empty.\nThen the overhead projector flickers on by itself, showing a slide: *‘Wrong room.’*",
+    "choices": [
+      {"text": "Open the flickering drawer 🗄️", "next": "key_middle"},
+      {"text": "Leave quickly 🙅", "next": "other_exit"}
+    ]
+  },
+  "stay_hidden": {
+    "text": "From under the desk, you hear faint typing on your keyboard. A soft whisper follows:\n*‘Time’s up.’* The monitor glows with your own login — but the hands on the keyboard aren’t yours. ⏱️",
+    "choices": [
+      {"text": "Crawl toward the hallway 🐛", "next": "conference_room"},
+      {"text": "Peek at the desk 👀", "next": "search_desk"}
+    ]
+  },
+  "key_left": {
+    "text": "✅ The left cup hides a small brass key. The whisper fades. You sprint to the exit, unlock it, and feel the cool night air — free at last.\n…until your phone buzzes: *‘See you tomorrow, player one.’* 🎉",
+    "choices": []
+  },
+  "key_middle": {
+    "text": "❌ The middle cup rattles — empty. The lights flicker, then cut out.\nWhen they return, your reflection in the microwave is smiling back. And it doesn’t stop smiling. 😨",
+    "choices": []
+  },
+  "key_right": {
+    "text": "❌ The right cup contains only a candy — and a note beneath it: *‘Too sweet. Too slow.’*\nThe break room door locks behind you as the clock strikes 10. Tick. Tick. Silence. ⏰",
+    "choices": []
+  },
+  "other_exit": {
+    "text": "✅ You burst into the emergency stairwell. Freedom!\nYou laugh, catching your breath — until your office access card *slides under the stair door from the inside.* 🏃‍♂️💨",
+    "choices": []
+  }
+};
+
+const storyDiv = document.getElementById("story");
+const choicesDiv = document.getElementById("choices");
+const typingSound = document.getElementById("typingSound");
+const flickerSound = document.getElementById("flickerSound");
+const whisperSound = document.getElementById("whisperSound");
+
+function typeWriterEffect(text, callback) {
+  storyDiv.innerHTML = "";
+  let i = 0;
+  typingSound.play();
+  const interval = setInterval(() => {
+    storyDiv.innerHTML += text.charAt(i);
+    i++;
+    if (i >= text.length) {
+      clearInterval(interval);
+      typingSound.pause();
+      typingSound.currentTime = 0;
+      setTimeout(callback, 400);
+    }
+  }, 30);
+}
+
+function playScene(sceneKey) {
+  const scene = story[sceneKey];
+  if (!scene) return;
+  choicesDiv.innerHTML = "";
+
+  // Random flicker/whisper effects
+  if (Math.random() < 0.4) flickerSound.play();
+  else if (Math.random() < 0.4) whisperSound.play();
+
+  typeWriterEffect(scene.text, () => {
+    if (scene.choices.length === 0) {
+      const restart = document.createElement("button");
+      restart.textContent = "🔁 Play Again";
+      restart.className = "choice-btn";
+      restart.onclick = () => playScene("start");
+      choicesDiv.appendChild(restart);
+    } else {
+      scene.choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.textContent = choice.text;
+        btn.className = "choice-btn";
+        btn.onclick = () => playScene(choice.next);
+        choicesDiv.appendChild(btn);
+      });
+    }
+  });
+}
+
+playScene("start");
+</script>
+</body>
+</html>
