@@ -1,60 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Do You Want to Play? 👻</title>
 <style>
-  body {
-    background-color: #000;
-    color: #e3e3e3;
-    font-family: "Courier New", monospace;
-    padding: 40px;
-    line-height: 1.6;
-    max-width: 700px;
-    margin: auto;
-  }
-  #story {
-    font-size: 1.1em;
-    white-space: pre-wrap;
-    min-height: 180px;
-  }
-  .choice-btn {
-    background: #222;
-    border: 1px solid #555;
-    border-radius: 10px;
-    padding: 10px 15px;
-    color: #eee;
-    margin: 8px 0;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.2s;
-    width: 100%;
-    text-align: left;
-  }
-  .choice-btn:hover {
-    background: #444;
-    transform: scale(1.02);
-  }
-  h1 {
-    text-align: center;
-    color: #ff3333;
-  }
-  .flicker {
-    animation: flicker 2s infinite;
-  }
-  @keyframes flicker {
-    0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
-    20%, 24%, 55% { opacity: 0.3; }
-  }
+  body{background:#000;color:#eaeaea;font-family:monospace;padding:30px;max-width:760px;margin:auto}
+  h1{color:#ff4444;text-align:center}
+  #start-screen{text-align:center;margin-top:60px}
+  #story{white-space:pre-wrap;min-height:180px;font-size:1.05rem;margin:18px 0}
+  .choice-btn{display:block;width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:#111;color:#eee;margin:8px 0;cursor:pointer;text-align:left}
+  #mute-btn{position:fixed;right:14px;top:14px;padding:6px 10px;border-radius:8px;background:#111;border:1px solid #444;color:#fff;cursor:pointer}
 </style>
 </head>
 <body>
-<h1 class="flicker">💻 Do You Want to Play? 💀</h1>
-<div id="story"></div>
-<div id="choices"></div>
-<audio id="typingSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_ebc4dc0673.mp3?filename=keyboard-typing-81261.mp3"></audio>
-<audio id="flickerSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_59d4436d1f.mp3?filename=light-flicker-81138.mp3"></audio>
-<audio id="whisperSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_1aee62dc15.mp3?filename=spooky-whisper-81150.mp3"></audio>
+  <h1>💻 Do You Want to Play? 💀</h1>
+
+  <div id="start-screen">
+    <p>It’s 6:59 PM. The office is empty. Do you dare to start?</p>
+    <button id="start-btn" class="choice-btn">▶️ Start Game</button>
+  </div>
+
+  <div id="game" style="display:none">
+    <div id="story"></div>
+    <div id="choices"></div>
+  </div>
+
+  <button id="mute-btn" style="display:none">🔊 Sound On</button>
+
+  <!-- Local audio files (added to /assets/audio/) -->
+  <audio id="bgMusic" src="assets/audio/bg.mp3" loop preload="auto"></audio>
+  <audio id="typingSound" src="assets/audio/typing.mp3" preload="auto"></audio>
+  <audio id="flickerSound" src="assets/audio/flicker.mp3" preload="auto"></audio>
+  <audio id="whisperSound" src="assets/audio/whisper.mp3" preload="auto"></audio>
 
 <script>
 const story = {
@@ -118,7 +96,7 @@ const story = {
   "conference_room": {
     "text": "The door creaks open. It’s dark. A chair slowly turns toward you — empty.\nThen the overhead projector flickers on by itself, showing a slide: *‘Wrong room.’*",
     "choices": [
-      {"text": "Open the flickering drawer 🗄️", "next": "key_middle"},
+      {"text": "Run to your desk", "next": "search_desk"},
       {"text": "Leave quickly 🙅", "next": "other_exit"}
     ]
   },
@@ -147,57 +125,115 @@ const story = {
   }
 };
 
-const storyDiv = document.getElementById("story");
-const choicesDiv = document.getElementById("choices");
-const typingSound = document.getElementById("typingSound");
-const flickerSound = document.getElementById("flickerSound");
-const whisperSound = document.getElementById("whisperSound");
+const storyDiv = document.getElementById('story');
+const choicesDiv = document.getElementById('choices');
+const startScreen = document.getElementById('start-screen');
+const game = document.getElementById('game');
+const startBtn = document.getElementById('start-btn');
+const muteBtn = document.getElementById('mute-btn');
 
-function typeWriterEffect(text, callback) {
-  storyDiv.innerHTML = "";
-  let i = 0;
-  typingSound.play();
-  const interval = setInterval(() => {
-    storyDiv.innerHTML += text.charAt(i);
+const bgMusic = document.getElementById('bgMusic');
+const typingSound = document.getElementById('typingSound');
+const flickerSound = document.getElementById('flickerSound');
+const whisperSound = document.getElementById('whisperSound');
+
+let soundEnabled = true;
+
+/* ---------- audio error logging (helps debugging) ---------- */
+[bgMusic, typingSound, flickerSound, whisperSound].forEach(a => {
+  a.addEventListener('error', (e) => {
+    console.error('Audio load error for', a.src, e);
+  });
+});
+
+/* ---------- typewriter (plays typing sound) ---------- */
+function typeWriterEffect(text, callback){
+  storyDiv.textContent = '';
+  let i=0;
+  if(soundEnabled){ try{ typingSound.currentTime=0; typingSound.play().catch(()=>{}); }catch(e){} }
+  const t = setInterval(()=>{
+    storyDiv.textContent += text.charAt(i) || '';
     i++;
-    if (i >= text.length) {
-      clearInterval(interval);
-      typingSound.pause();
-      typingSound.currentTime = 0;
-      setTimeout(callback, 400);
+    if(i>=text.length){
+      clearInterval(t);
+      try{ typingSound.pause(); typingSound.currentTime=0; }catch(e){}
+      setTimeout(callback, 420);
     }
-  }, 30);
+  }, 28);
 }
 
-function playScene(sceneKey) {
-  const scene = story[sceneKey];
-  if (!scene) return;
-  choicesDiv.innerHTML = "";
+/* ---------- render scene ---------- */
+function playScene(key){
+  const scene = story[key];
+  if(!scene) return;
+  choicesDiv.innerHTML = '';
 
-  // Random flicker/whisper effects
-  if (Math.random() < 0.4) flickerSound.play();
-  else if (Math.random() < 0.4) whisperSound.play();
+  // random sound cues
+  if(soundEnabled){
+    const r = Math.random();
+    if(r < 0.35) { flickerSound.currentTime=0; flickerSound.play().catch(()=>{}); }
+    else if(r < 0.7) { whisperSound.currentTime=0; whisperSound.play().catch(()=>{}); }
+  }
 
   typeWriterEffect(scene.text, () => {
-    if (scene.choices.length === 0) {
-      const restart = document.createElement("button");
-      restart.textContent = "🔁 Play Again";
-      restart.className = "choice-btn";
-      restart.onclick = () => playScene("start");
-      choicesDiv.appendChild(restart);
+    if(!scene.choices || scene.choices.length===0){
+      const b = document.createElement('button');
+      b.textContent = '🔁 Play Again';
+      b.className = 'choice-btn';
+      b.onclick = () => playScene('start');
+      choicesDiv.appendChild(b);
     } else {
-      scene.choices.forEach(choice => {
-        const btn = document.createElement("button");
-        btn.textContent = choice.text;
-        btn.className = "choice-btn";
-        btn.onclick = () => playScene(choice.next);
+      scene.choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className='choice-btn';
+        btn.textContent = c.text;
+        btn.onclick = () => playScene(c.next);
         choicesDiv.appendChild(btn);
       });
     }
   });
 }
 
-playScene("start");
+/* ---------- Start (user interaction required to enable audio) ---------- */
+startBtn.addEventListener('click', async () => {
+  // show game, hide start
+  startScreen.style.display='none';
+  game.style.display='block';
+  muteBtn.style.display='inline-block';
+
+  // ensure audio playback is allowed -> attempt play then pause if muted
+  try{
+    await bgMusic.play();
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+  }catch(e){
+    console.warn('Autoplay prevented; will play after first user gesture.');
+  }
+
+  // start background if sound enabled
+  if(soundEnabled){
+    bgMusic.volume = 0.28;
+    bgMusic.play().catch(()=>{ /* ignore */ });
+  }
+
+  playScene('start');
+});
+
+/* ---------- Mute toggle ---------- */
+muteBtn.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  muteBtn.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
+  if(soundEnabled){
+    bgMusic.play().catch(()=>{});
+  } else {
+    bgMusic.pause();
+    try{ typingSound.pause(); flickerSound.pause(); whisperSound.pause(); }catch(e){}
+  }
+});
+
+/* ---------- initial UI state ---------- */
+game.style.display='none';
+muteBtn.style.display='none';
 </script>
 </body>
 </html>
