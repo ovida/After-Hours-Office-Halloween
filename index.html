@@ -49,7 +49,6 @@
 const story = {
   "start": {
     "text": "👀 *6:59 PM.* Everyone’s gone. The hum of the lights feels louder than usual. You’re about to shut down your PC when an email pops up:\n*From:* unknown@officecorp.com\n*Subject:* Do you want to play?",
-    //"sound": "ambient",
     "choices": [
       {"text": "Open the email 📧", "next": "open_email"},
       {"text": "Ignore it 🙈", "next": "ignore_email"}
@@ -57,7 +56,6 @@ const story = {
   },
   "open_email": {
     "text": "📩 The email simply says: *‘We know you stayed late. Let’s play a game. Find the red folder.’*\nA faint *footstep* echoes down the hall — but you’re alone... right?",
-   "sound": "footstep",
     "choices": [
       {"text": "Search your desk 🗄️", "next": "search_desk"},
       {"text": "Check the hallway 🚶", "next": "search_hallway"}
