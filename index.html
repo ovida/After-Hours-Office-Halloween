@@ -148,67 +148,74 @@ const whisperSound = document.getElementById('whisperSound');
 
 let soundEnabled = true;
 
-/* ---------- audio error logging (helps debugging) ---------- */
+/* ---------- audio error logging (helps debugging) ---------- 
 [bgMusic, typingSound, flickerSound, whisperSound].forEach(a => {
   a.addEventListener('error', (e) => {
     console.error('Audio load error for', a.src, e);
   });
+});*/
+
+/* ---------- Smooth Background Loop ---------- */
+bgMusic.loop = true;
+bgMusic.volume = 0.25;
+bgMusic.addEventListener("ended", () => {
+  bgMusic.currentTime = 0;
+  bgMusic.play().catch(()=>{});
 });
 
-/* ---------- typewriter (plays typing sound) ---------- */
+/* ---------- Helper: Safe sound play ---------- */
+function playSafe(audio, volume = 1.0) {
+  if (!soundEnabled || !audio) return;
+  try {
+    audio.currentTime = 0;
+    audio.volume = volume;
+    audio.play().catch(()=>{});
+  } catch (e) {}
+}
+
+/* ---------- Typewriter ---------- */
 function typeWriterEffect(text, callback){
   storyDiv.textContent = '';
   let i=0;
-  if(soundEnabled){ try{ typingSound.currentTime=0; typingSound.play().catch(()=>{}); }catch(e){} }
+  playSafe(typingSound, 0.3);
   const t = setInterval(()=>{
     storyDiv.textContent += text.charAt(i) || '';
     i++;
     if(i>=text.length){
       clearInterval(t);
-      try{ typingSound.pause(); typingSound.currentTime=0; }catch(e){}
+      typingSound.pause();
+      typingSound.currentTime = 0;
       setTimeout(callback, 420);
     }
   }, 28);
 }
 
-/* ---------- render scene ---------- */
+/* ---------- Scene rendering ---------- */
 function playScene(key) {
   const scene = story[key];
   if (!scene) return;
   choicesDiv.innerHTML = '';
 
-  // check for keywords
   const textLower = scene.text.toLowerCase();
   const hasWhisper = textLower.includes("whisper");
   const hasFlicker = textLower.includes("flicker");
 
   typeWriterEffect(scene.text, () => {
-    // 👻 whisper sound effect
-    if (soundEnabled && hasWhisper) {
-      whisperSound.currentTime = 0;
-      whisperSound.play().catch(() => {});
-    }
-
-    // 💡 flicker effect (sound + visual)
-    if (soundEnabled && hasFlicker) {
-      // play sound
-      flickerSound.currentTime = 0;
-      flickerSound.play().catch(() => {});
-
-      // screen flicker animation
+    if (hasWhisper) playSafe(whisperSound, 0.6);
+    if (hasFlicker) {
+      playSafe(flickerSound, 0.7);
       document.body.classList.add('flicker');
-      setTimeout(() => {
-        document.body.classList.remove('flicker');
-      }, 1200); // lasts ~1.2s
+      setTimeout(() => document.body.classList.remove('flicker'), 1200);
     }
 
-    // random small flickers if nothing special in text
-    if (soundEnabled && !hasWhisper && !hasFlicker && Math.random() < 0.2) {
-      flickerSound.currentTime = 0;
-      flickerSound.play().catch(() => {});
+    // Occasionally trigger faint flicker for tension
+    if (!hasWhisper && !hasFlicker && Math.random() < 0.15) {
+      playSafe(flickerSound, 0.3);
+      document.body.classList.add('flicker');
+      setTimeout(() => document.body.classList.remove('flicker'), 800);
     }
 
-    // show choices
+    // Build choices
     if (!scene.choices || scene.choices.length === 0) {
       const b = document.createElement('button');
       b.textContent = '🔁 Play Again';
@@ -227,32 +234,22 @@ function playScene(key) {
   });
 }
 
-/* ---------- Start (user interaction required to enable audio) ---------- */
+/* ---------- Start Game ---------- */
 startBtn.addEventListener('click', async () => {
-  // show game, hide start
   startScreen.style.display='none';
   game.style.display='block';
   muteBtn.style.display='inline-block';
 
-  // ensure audio playback is allowed -> attempt play then pause if muted
-  try{
+  try {
     await bgMusic.play();
-    bgMusic.pause();
-    bgMusic.currentTime = 0;
-  }catch(e){
-    console.warn('Autoplay prevented; will play after first user gesture.');
-  }
-
-  // start background if sound enabled
-  if(soundEnabled){
-    bgMusic.volume = 0.28;
-    bgMusic.play().catch(()=>{ /* ignore */ });
+  } catch {
+    console.warn("Autoplay blocked — will start after first gesture.");
   }
 
   playScene('start');
 });
 
-/* ---------- Mute toggle ---------- */
+/* ---------- Mute Toggle ---------- */
 muteBtn.addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   muteBtn.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
@@ -260,13 +257,9 @@ muteBtn.addEventListener('click', () => {
     bgMusic.play().catch(()=>{});
   } else {
     bgMusic.pause();
-    try{ typingSound.pause(); flickerSound.pause(); whisperSound.pause(); }catch(e){}
+    [typingSound, flickerSound, whisperSound].forEach(a => {a.pause();});
   }
 });
-
-/* ---------- initial UI state ---------- */
-game.style.display='none';
-muteBtn.style.display='none';
 </script>
 </body>
 </html>
