@@ -198,12 +198,6 @@ function playScene(key) {
   if (!scene) return;
   choicesDiv.innerHTML = '';
 
-    // handle new sound
-    if (scene.sound && sounds[scene.sound]) {
-    currentSound = sounds[scene.sound];
-    currentSound.volume = 0.5;
-    currentSound.play().catch(() => {});
-  }
 
   const textLower = scene.text.toLowerCase();
   const hasWhisper = textLower.includes("whisper");
