@@ -42,7 +42,7 @@
   <audio id="typingSound" src="assets/audio/typing.mp3" preload="auto"></audio>
   <audio id="flickerSound" src="assets/audio/flicker.mp3" preload="auto"></audio>
   <audio id="whisperSound" src="assets/audio/whisper.mp3" preload="auto"></audio>
-  <audio id="footstep" src="assets/audio/whisper.mp3" preload="auto"></audio>
+  <audio id="footstepSound" src="assets/audio/whisper.mp3" preload="auto"></audio>
 
 
 <script>
@@ -55,7 +55,7 @@ const story = {
     ]
   },
   "open_email": {
-    "text": "📩 The email simply says: *‘We know you stayed late. Let’s play a game. Find the red folder.’*\nA faint *footstep* echoes down the hall — but you’re alone... right?",
+    "text": "📩 The email simply says: *‘We know you stayed late. Let’s play a game. Find the red folder.’*\nA faint footstep echoes down the hall — but you’re alone... right?",
     "choices": [
       {"text": "Search your desk 🗄️", "next": "search_desk"},
       {"text": "Check the hallway 🚶", "next": "search_hallway"}
@@ -147,6 +147,7 @@ const bgMusic = document.getElementById('bgMusic');
 const typingSound = document.getElementById('typingSound');
 const flickerSound = document.getElementById('flickerSound');
 const whisperSound = document.getElementById('whisperSound');
+const footstepSound = document.getElementById('footstepSound');
 
 let soundEnabled = true;
 
@@ -202,9 +203,11 @@ function playScene(key) {
   const textLower = scene.text.toLowerCase();
   const hasWhisper = textLower.includes("whisper");
   const hasFlicker = textLower.includes("flicker");
+  const hasFootstep = textLower.includes("footstep")
 
   typeWriterEffect(scene.text, () => {
     if (hasWhisper) playSafe(whisperSound, 0.6);
+    if (hasFootstep) playSafe(footstepSound, 0.5);
     if (hasFlicker) {
       playSafe(flickerSound, 0.7);
       document.body.classList.add('flicker');
