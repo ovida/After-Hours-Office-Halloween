@@ -42,11 +42,14 @@
   <audio id="typingSound" src="assets/audio/typing.mp3" preload="auto"></audio>
   <audio id="flickerSound" src="assets/audio/flicker.mp3" preload="auto"></audio>
   <audio id="whisperSound" src="assets/audio/whisper.mp3" preload="auto"></audio>
+  <audio id="footstep" src="assets/audio/whisper.mp3" preload="auto"></audio>
+
 
 <script>
 const story = {
   "start": {
     "text": "👀 *6:59 PM.* Everyone’s gone. The hum of the lights feels louder than usual. You’re about to shut down your PC when an email pops up:\n*From:* unknown@officecorp.com\n*Subject:* Do you want to play?",
+    //"sound": "ambient",
     "choices": [
       {"text": "Open the email 📧", "next": "open_email"},
       {"text": "Ignore it 🙈", "next": "ignore_email"}
@@ -54,6 +57,7 @@ const story = {
   },
   "open_email": {
     "text": "📩 The email simply says: *‘We know you stayed late. Let’s play a game. Find the red folder.’*\nA faint *footstep* echoes down the hall — but you’re alone... right?",
+   "sound": "footstep",
     "choices": [
       {"text": "Search your desk 🗄️", "next": "search_desk"},
       {"text": "Check the hallway 🚶", "next": "search_hallway"}
@@ -98,7 +102,7 @@ const story = {
   "exit_door": {
     "text": "You reach the exit. The glass reflects the office behind you — except the reflection isn’t moving.\nIt slowly smiles. 😳",
     "choices": [
-      {"text": "Look for a key 🗝️", "next": "break_room"},
+      {"text": "Run back to your desk", "next": "search_desk"},
       {"text": "Try another exit 🏃", "next": "other_exit"}
     ]
   },
@@ -195,6 +199,13 @@ function playScene(key) {
   const scene = story[key];
   if (!scene) return;
   choicesDiv.innerHTML = '';
+
+    // handle new sound
+    if (scene.sound && sounds[scene.sound]) {
+    currentSound = sounds[scene.sound];
+    currentSound.volume = 0.5;
+    currentSound.play().catch(() => {});
+  }
 
   const textLower = scene.text.toLowerCase();
   const hasWhisper = textLower.includes("whisper");
